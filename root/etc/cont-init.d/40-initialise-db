@@ -10,6 +10,16 @@ start_mysql(){
         RET=$?
         sleep 1
     done
+    
+    if [[ ${#SQL_DUMP_FILES[@]} -ne 0 ]]; then
+        for DUMP_FILE in ${SQL_DUMP_FILES[@]}; do
+            echo "Dump file ${DUMP_FILE}"
+            mysql -u root -e "source ${DUMP_FILE};" > /dev/null 2>&1
+            echo "Dump complete"
+        done
+    else
+        echo "Nos SQL dump file found"
+    fi
 }
 
 # test for existence of mysql folder in datadir and start initialise if not present
@@ -96,6 +106,10 @@ fi
 # set some permissions needed before we begin initialising
 chown -R abc:abc /config/log/mysql /var/run/mysqld /var/lib/mysql
 chmod -R 777 /config/log/mysql /var/run/mysqld /var/lib/mysql
+
+# get list of sql dump files
+shopt -s nullglob
+SQL_DUMP_FILES=(/config/dump.files.d/*.sql)
 
 # initialise database structure
 mysql_install_db --datadir="${DATADIR}" --user=abc --auth-root-authentication-method=normal
